@@ -38,7 +38,7 @@ jobs:
           BASE_URL: https://9router-app.oeganz1999.workers.dev
           CLOUD_URL: https://9router-app.oeganz1999.workers.dev
           PORT: 20128
-          DATA_DIR: /var/lib/9router
+          DATA_DIR: /tmp/9router-data
           API_KEY_SECRET: endpoint-proxy-secret
           MACHINE_ID_SALT: endpoint-proxy-salt
           JWT_SECRET: jwt-secret-placeholder
