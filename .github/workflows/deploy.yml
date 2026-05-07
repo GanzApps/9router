@@ -28,8 +28,10 @@ jobs:
       - name: Install wrangler 4.87.0
         run: npm install wrangler@4.87.0 --no-package-lock
 
-      - name: Build OpenNext Cloudflare Worker
-        run: npx opennextjs-cloudflare build
+      - name: Build and Deploy
+        run: |
+          npx opennextjs-cloudflare build
+          npx wrangler deploy --config wrangler.jsonc
         env:
           NODE_ENV: production
           SKIP_WRANGLER_CONFIG_CHECK: "yes"
@@ -47,9 +49,4 @@ jobs:
           OBSERVABILITY_ENABLED: true
           AUTH_COOKIE_SECURE: "true"
           REQUIRE_API_KEY: "false"
-
-      - name: Deploy to Cloudflare Workers
-        run: npx wrangler deploy --config wrangler.jsonc
-        env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          NODE_ENV: production
