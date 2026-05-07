@@ -33,6 +33,10 @@ jobs:
         env:
           NODE_ENV: production
           SKIP_WRANGLER_CONFIG_CHECK: "yes"
+          NEXT_PUBLIC_BASE_URL: https://9router-app.oeganz1999.workers.dev
+          NEXT_PUBLIC_CLOUD_URL: https://9router-app.oeganz1999.workers.dev
+          BASE_URL: https://9router-app.oeganz1999.workers.dev
+          CLOUD_URL: https://9router-app.oeganz1999.workers.dev
 
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy --config wrangler.jsonc
