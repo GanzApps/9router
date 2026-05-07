@@ -37,6 +37,16 @@ jobs:
           NEXT_PUBLIC_CLOUD_URL: https://9router-app.oeganz1999.workers.dev
           BASE_URL: https://9router-app.oeganz1999.workers.dev
           CLOUD_URL: https://9router-app.oeganz1999.workers.dev
+          PORT: 20128
+          DATA_DIR: /var/lib/9router
+          API_KEY_SECRET: endpoint-proxy-secret
+          MACHINE_ID_SALT: endpoint-proxy-salt
+          JWT_SECRET: jwt-secret-placeholder
+          INITIAL_PASSWORD: admin
+          ENABLE_REQUEST_LOGS: false
+          OBSERVABILITY_ENABLED: true
+          AUTH_COOKIE_SECURE: "true"
+          REQUIRE_API_KEY: "false"
 
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy --config wrangler.jsonc
