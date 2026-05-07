@@ -32,8 +32,7 @@ jobs:
           SKIP_WRANGLER_CONFIG_CHECK: "yes"
 
       - name: Deploy to Cloudflare Workers
-        run: npx opennextjs-cloudflare deploy
+        run: npx wrangler deploy --config wrangler.toml
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           NODE_ENV: production
-          OPEN_NEXT_DEPLOY: "true"
