@@ -70,3 +70,11 @@ ecosystem.config.*
 
 scripts/agSniffer/*
 gitbooks/*
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example

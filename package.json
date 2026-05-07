@@ -4,15 +4,20 @@
   "description": "9Router web dashboard",
   "private": true,
   "scripts": {
+    "build": "NODE_ENV=production next build",
     "dev": "next dev --webpack --port 20128",
-    "build": "NODE_ENV=production next build --webpack",
     "start": "NODE_ENV=production next start",
     "dev:bun": "bun --bun next dev --webpack --port 20128",
     "build:bun": "NODE_ENV=production bun --bun next build --webpack",
-    "start:bun": "NODE_ENV=production bun ./.next/standalone/server.js"
+    "start:bun": "NODE_ENV=production bun ./.next/standalone/server.js",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@opennextjs/cloudflare": "^1.19.7",
     "@xyflow/react": "^12.10.1",
     "bcryptjs": "^3.0.3",
     "confbox": "^0.2.4",
@@ -23,14 +28,14 @@
     "lowdb": "^7.0.1",
     "marked": "^18.0.1",
     "monaco-editor": "^0.55.1",
-    "next": "^16.1.6",
+    "next": "^15.5.16",
     "node-forge": "^1.3.3",
     "node-machine-id": "^1.1.12",
     "open": "^11.0.0",
     "ora": "^9.1.0",
     "proper-lockfile": "^4.1.2",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "react-is": "^16.13.1",
     "recharts": "^3.7.0",
     "selfsigned": "^5.5.0",
@@ -46,8 +51,9 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^15.5.16",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "wrangler": "^4.88.0"
   }
 }

@@ -218,10 +218,14 @@ export default function UsageStats({ period: periodProp, setPeriod: setPeriodPro
       .catch(() => {});
   }, []);
 
+  // Track whether this is the initial load
+  const isInitial = useRef(!stats);
+  const prevStats = useRef(stats);
+
   // Fetch filtered stats via REST when period changes
   useEffect(() => {
-    // First load: show full spinner; subsequent: show subtle fetching indicator
-    if (!stats) setLoading(true);
+    // Show appropriate loading state
+    if (isInitial.current) setLoading(true);
     else setFetching(true);
 
     fetch(`/api/usage/stats?period=${period}`)
@@ -233,6 +237,7 @@ export default function UsageStats({ period: periodProp, setPeriod: setPeriodPro
       .finally(() => {
         setLoading(false);
         setFetching(false);
+        isInitial.current = false;
       });
   }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
 

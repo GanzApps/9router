@@ -523,7 +523,7 @@ function UpdateProgress({ status, latestVersion, installCmd, copied, onCopy }) {
         </div>
       ) : (
         <p className="text-xs text-white/50 text-center">
-          This may take 30-60 seconds. Please don't close this window.
+          This may take 30-60 seconds. Please do not close this window.
         </p>
       )}
     </div>

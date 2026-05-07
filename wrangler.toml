@@ -1,0 +1,31 @@
+name = "9router-app"
+main = ".open-next/worker.js"
+account_id = "a76e974e7c97043eb60c5a97bb651284"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NODE_ENV = "production"
+BASE_URL = "https://9router-app.oeganz1999.workers.dev"
+CLOUD_URL = "https://9router-app.oeganz1999.workers.dev"
+NEXT_PUBLIC_BASE_URL = "https://9router-app.oeganz1999.workers.dev"
+NEXT_PUBLIC_CLOUD_URL = "https://9router-app.oeganz1999.workers.dev"
+PORT = "20128"
+DATA_DIR = "/tmp/9router-data"
+ENABLE_REQUEST_LOGS = "false"
+OBSERVABILITY_ENABLED = "true"
+AUTH_COOKIE_SECURE = "true"
+REQUIRE_API_KEY = "false"
+
+[[kv_namespaces]]
+binding = "NEXT_INC_CACHE_KV"
+id = "e00b29f4247e43d78d0f983330f34bad"
+
+[[kv_namespaces]]
+binding = "NEXT_TAG_CACHE_KV"
+id = "e00b29f4247e43d78d0f983330f34bad"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "proxy-db"
+database_id = "a5243dff-120c-48fb-84bd-a34080ff6a50"
