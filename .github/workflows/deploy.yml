@@ -32,7 +32,7 @@ jobs:
           SKIP_WRANGLER_CONFIG_CHECK: "yes"
 
       - name: Deploy to Cloudflare Workers
-        run: npx wrangler deploy --config wrangler.toml
+        run: npx wrangler deploy --config wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           NODE_ENV: production
