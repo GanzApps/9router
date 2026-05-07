@@ -29,3 +29,7 @@ id = "e00b29f4247e43d78d0f983330f34bad"
 binding = "DB"
 database_name = "proxy-db"
 database_id = "a5243dff-120c-48fb-84bd-a34080ff6a50"
+
+[[assets]]
+binding = "ASSETS"
+directory = ".open-next/assets"
