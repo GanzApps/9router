@@ -1,5 +1,5 @@
 import { BaseExecutor } from "./base.js";
-import { PROVIDERS } from "../config/providers.js";
+import { PROVIDERS, resolveXiaomiTokenplanBaseUrl } from "../config/providers.js";
 import { OAUTH_ENDPOINTS, buildKimiHeaders } from "../config/appConstants.js";
 import { buildClineHeaders } from "../../src/shared/utils/clineAuth.js";
 import { getCachedClaudeHeaders } from "../utils/claudeHeaderCache.js";
@@ -12,7 +12,28 @@ export class DefaultExecutor extends BaseExecutor {
   }
 
   transformRequest(model, body) {
-    return injectReasoningContent({ provider: this.provider, model, body });
+    const transformed = this.applyJsonSchemaFallback(body);
+    return injectReasoningContent({ provider: this.provider, model, body: transformed });
+  }
+
+  // Fallback json_schema → json_object for openai-compatible providers without native Structured Output.
+  applyJsonSchemaFallback(body) {
+    if (!this.provider?.startsWith?.("openai-compatible-")) return body;
+    const rf = body?.response_format;
+    if (rf?.type !== "json_schema" || !rf.json_schema?.schema) return body;
+
+    const schemaJson = JSON.stringify(rf.json_schema.schema, null, 2);
+    const prompt = `You must respond with valid JSON that strictly follows this JSON schema:\n\`\`\`json\n${schemaJson}\n\`\`\`\nRespond ONLY with the JSON object, no other text.`;
+
+    const messages = Array.isArray(body.messages) ? body.messages.map(m => ({ ...m })) : [];
+    const sys = messages.find(m => m.role === "system");
+    if (sys) {
+      if (typeof sys.content === "string") sys.content = `${sys.content}\n\n${prompt}`;
+      else if (Array.isArray(sys.content)) sys.content.push({ type: "text", text: `\n\n${prompt}` });
+    } else {
+      messages.unshift({ role: "system", content: prompt });
+    }
+    return { ...body, messages, response_format: { type: "json_object" } };
   }
 
   buildUrl(model, stream, urlIndex = 0, credentials = null) {
@@ -39,6 +60,9 @@ export class DefaultExecutor extends BaseExecutor {
       case "gemini":
         return `${this.config.baseUrl}/${model}:${stream ? "streamGenerateContent?alt=sse" : "generateContent"}`;
       default: {
+        if (this.provider === "xiaomi-tokenplan") {
+          return `${resolveXiaomiTokenplanBaseUrl(credentials)}/chat/completions`;
+        }
         const url = this.config.baseUrl;
         if (url?.includes("{accountId}")) {
           const accountId = credentials?.providerSpecificData?.accountId;
@@ -96,11 +120,9 @@ export class DefaultExecutor extends BaseExecutor {
       case "kimi":
       case "minimax":
       case "minimax-cn":
-        headers["x-api-key"] = credentials.apiKey || credentials.accessToken;
-        break;
       case "kimi-coding":
-        headers["Authorization"] = `Bearer ${credentials.accessToken}`;
-        Object.assign(headers, buildKimiHeaders());
+        headers["x-api-key"] = credentials.apiKey || credentials.accessToken;
+        if (this.provider === "kimi-coding") Object.assign(headers, buildKimiHeaders());
         break;
       default:
         if (this.provider?.startsWith?.("anthropic-compatible-")) {
@@ -124,6 +146,10 @@ export class DefaultExecutor extends BaseExecutor {
           }
         } else if (this.provider === "cline") {
           Object.assign(headers, buildClineHeaders(credentials.apiKey || credentials.accessToken));
+        } else if (this.config?.format === "claude") {
+          // Generic claude-format provider (e.g. agentrouter): x-api-key + anthropic-version
+          headers["x-api-key"] = credentials.apiKey || credentials.accessToken;
+          if (!headers["anthropic-version"]) headers["anthropic-version"] = "2023-06-01";
         } else {
           headers["Authorization"] = `Bearer ${credentials.apiKey || credentials.accessToken}`;
         }

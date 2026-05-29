@@ -11,6 +11,22 @@
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
 	},
+	"kv_namespaces": [
+		{
+			"binding": "NEXT_INC_CACHE_KV",
+			"id": "e00b29f4247e43d78d0f983330f34bad"
+		},
+		{
+			"binding": "NEXT_TAG_CACHE_KV",
+			"id": "e00b29f4247e43d78d0f983330f34bad"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "a5243dff-120c-48fb-84bd-a34080ff6a50"
+		}
+	],
 	"services": [
 		{
 			// Self-reference service binding, the service name must match the worker name

@@ -2,7 +2,7 @@ import pkg from "../../../package.json" with { type: "json" };
 
 // App configuration
 export const APP_CONFIG = {
-  name: "9Router proxy",
+  name: "9Router Proxy",
   description: "AI Infrastructure Management",
   version: pkg.version,
 };
@@ -10,12 +10,15 @@ export const APP_CONFIG = {
 // GitHub configuration
 export const GITHUB_CONFIG = {
   changelogUrl: "https://raw.githubusercontent.com/decolua/9router/refs/heads/master/CHANGELOG.md",
+  donateUrl: "https://9router.com/api/donate",
 };
 
 // Updater configuration
 export const UPDATER_CONFIG = {
   npmPackageName: "9router",
   installCmd: "npm i -g 9router",
+  installCmdLatest: "npm i -g 9router@latest --prefer-online",
+  shutdownCountdownSec: 3,
   exitDelayMs: 500,
   statusPort: 20129,
   statusPollIntervalMs: 1000,
@@ -23,8 +26,8 @@ export const UPDATER_CONFIG = {
   installRetries: 3,
   installRetryDelayMs: 5000,
   lingerAfterDoneMs: 30000,
-  waitForExitMinMs: 3000,
-  waitForExitMaxMs: 15000,
+  waitForExitMinMs: 5000,
+  waitForExitMaxMs: 20000,
   waitForExitCheckMs: 500,
   appPort: 20128,
 };
@@ -56,6 +59,9 @@ export const CONSOLE_LOG_CONFIG = {
   pollIntervalMs: 1000,
 };
 
+// Client-side store TTL: how long fetched data stays fresh before re-fetching
+export const CLIENT_STORE_TTL_MS = 60000;
+
 // Provider API endpoints (for display only)
 export const PROVIDER_ENDPOINTS = {
   openrouter: "https://openrouter.ai/api/v1/chat/completions",
@@ -69,6 +75,7 @@ export const PROVIDER_ENDPOINTS = {
   "volcengine-ark": "https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions",
   byteplus: "https://ark.ap-southeast.bytepluses.com/api/coding/v3/chat/completions",
   openai: "https://api.openai.com/v1/chat/completions",
+  "vercel-ai-gateway": "https://ai-gateway.vercel.sh/v1/chat/completions",
   anthropic: "https://api.anthropic.com/v1/messages",
   gemini: "https://generativelanguage.googleapis.com/v1beta/models",
   ollama: "https://ollama.com/api/chat",

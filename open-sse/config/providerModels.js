@@ -29,6 +29,7 @@ function withCodexReviewModels(models) {
 export const PROVIDER_MODELS = {
   // OAuth Providers (using alias)
   cc: [  // Claude Code
+    { id: "claude-opus-4-8", name: "Claude Opus 4.8" },
     { id: "claude-opus-4-7", name: "Claude Opus 4.7" },
     { id: "claude-opus-4-6", name: "Claude Opus 4.6" },
     { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
@@ -39,6 +40,7 @@ export const PROVIDER_MODELS = {
   cx: withCodexReviewModels([  // OpenAI Codex
     { id: "gpt-5.5", name: "GPT 5.5" },
     { id: "gpt-5.4", name: "GPT 5.4" },
+    { id: "gpt-5.4-mini", name: "GPT 5.4 Mini" },
     // GPT 5.3 Codex - all thinking levels
     { id: "gpt-5.3-codex", name: "GPT 5.3 Codex" },
     { id: "gpt-5.3-codex-xhigh", name: "GPT 5.3 Codex (xHigh)" },
@@ -46,21 +48,10 @@ export const PROVIDER_MODELS = {
     { id: "gpt-5.3-codex-low", name: "GPT 5.3 Codex (Low)" },
     { id: "gpt-5.3-codex-none", name: "GPT 5.3 Codex (None)" },
     { id: "gpt-5.3-codex-spark", name: "GPT 5.3 Codex Spark" },
-    // Mini - medium and high only
-    { id: "gpt-5.1-codex-mini", name: "GPT 5.1 Codex Mini" },
-    { id: "gpt-5.1-codex-mini-high", name: "GPT 5.1 Codex Mini (High)" },
-    // Other models
-    { id: "gpt-5.2-codex", name: "GPT 5.2 Codex" },
-    { id: "gpt-5.2", name: "GPT 5.2" },
-    { id: "gpt-5.1-codex-max", name: "GPT 5.1 Codex Max" },
-    { id: "gpt-5.1-codex", name: "GPT 5.1 Codex" },
-    { id: "gpt-5.1", name: "GPT 5.1" },
-    { id: "gpt-5-codex", name: "GPT 5 Codex" },
-    { id: "gpt-5-codex-mini", name: "GPT 5 Codex Mini" },
     // Image models (uses image_generation tool, requires Plus/Pro plan)
+    { id: "gpt-5.5-image", name: "GPT 5.5 Image", type: "image", capabilities: ["text2img", "edit"], params: ["size", "quality", "background", "image_detail", "output_format"] },
     { id: "gpt-5.4-image", name: "GPT 5.4 Image", type: "image", capabilities: ["text2img", "edit"], params: ["size", "quality", "background", "image_detail", "output_format"] },
     { id: "gpt-5.3-image", name: "GPT 5.3 Image", type: "image", capabilities: ["text2img", "edit"], params: ["size", "quality", "background", "image_detail", "output_format"] },
-    { id: "gpt-5.2-image", name: "GPT 5.2 Image", type: "image", capabilities: ["text2img", "edit"], params: ["size", "quality", "background", "image_detail", "output_format"] },
   ]),
   gc: [  // Gemini CLI
     { id: "gemini-3-flash-preview", name: "Gemini 3 Flash Preview" },
@@ -91,12 +82,15 @@ export const PROVIDER_MODELS = {
     { id: "iflow-rome-30ba3b", name: "iFlow ROME" },
   ],
   ag: [  // Antigravity - special case: models call different backends
-    { id: "gemini-3.1-pro-high", name: "Gemini 3 Pro High" },
-    { id: "gemini-3.1-pro-low", name: "Gemini 3 Pro Low" },
-    { id: "gemini-3-flash", name: "Gemini 3 Flash", thinking: false }, // AG strips thinking for this model
-    { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
-    { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 Thinking" },
-    { id: "gpt-oss-120b-medium", name: "GPT OSS 120B Medium" },
+    { id: "gemini-3.5-flash-extra-low", name: "Gemini 3.5 Flash (Extra Low)" },
+    { id: "gemini-3-flash-agent", name: "Gemini 3.5 Flash (High)" },
+    { id: "gemini-3.5-flash-low", name: "Gemini 3.5 Flash (Medium)" },
+    { id: "gemini-pro-agent", name: "Gemini 3.1 Pro (High)" },
+    { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)" },
+    { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6 (Thinking)" },
+    { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 (Thinking)" },
+    { id: "gpt-oss-120b-medium", name: "GPT-OSS 120B (Medium)" },
+    { id: "gemini-3-flash", name: "Gemini 3 Flash", thinking: false }, // command model; AG strips thinking
   ],
   gh: [  // GitHub Copilot - OpenAI models
     { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo" },
@@ -131,6 +125,7 @@ export const PROVIDER_MODELS = {
     { id: "text-embedding-3-large", name: "Text Embedding 3 Large (GitHub)", type: "embedding" },
   ],
   kr: [  // Kiro AI
+    // --- Base Claude variants ---
     // { id: "claude-opus-4.5", name: "Claude Opus 4.5" },
     { id: "claude-sonnet-4.5", name: "Claude Sonnet 4.5" },
     { id: "claude-haiku-4.5", name: "Claude Haiku 4.5" },
@@ -138,6 +133,31 @@ export const PROVIDER_MODELS = {
     { id: "qwen3-coder-next", name: "Qwen3 Coder Next", strip: ["image", "audio"] },
     { id: "glm-5", name: "GLM 5" },
     { id: "MiniMax-M2.5", name: "MiniMax M2.5" },
+    // --- Thinking variants (alias to base; thinking is enabled at request time
+    //     via <thinking_mode>enabled</thinking_mode> system-prompt injection) ---
+    { id: "claude-sonnet-4.5-thinking", name: "Claude Sonnet 4.5 (Thinking)" },
+    { id: "claude-haiku-4.5-thinking", name: "Claude Haiku 4.5 (Thinking)" },
+    // --- Agentic variants (synthetic; same upstream model + chunked-write
+    //     system prompt to dodge Kiro's 2-3 min server timeout on big writes) ---
+    { id: "claude-sonnet-4.5-agentic", name: "Claude Sonnet 4.5 (Agentic)" },
+    { id: "claude-haiku-4.5-agentic", name: "Claude Haiku 4.5 (Agentic)" },
+    { id: "claude-sonnet-4.5-thinking-agentic", name: "Claude Sonnet 4.5 (Thinking + Agentic)" },
+    { id: "claude-haiku-4.5-thinking-agentic", name: "Claude Haiku 4.5 (Thinking + Agentic)" },
+  ],
+  qd: [  // Qoder - tier + frontier models (server-published catalog)
+    // Tier models — pick a quality/cost tradeoff
+    { id: "auto", name: "Qoder Auto" },
+    { id: "ultimate", name: "Qoder Ultimate" },
+    { id: "performance", name: "Qoder Performance" },
+    { id: "efficient", name: "Qoder Efficient" },
+    { id: "lite", name: "Qoder Lite" },
+    // Frontier models — pin a specific backing model
+    { id: "qmodel", name: "Qwen 3.6 Plus (Qoder)" },
+    { id: "dmodel", name: "DeepSeek V4 Pro (Qoder)" },
+    { id: "dfmodel", name: "DeepSeek V4 Flash (Qoder)" },
+    { id: "gm51model", name: "GLM 5.1 (Qoder)" },
+    { id: "kmodel", name: "Kimi K2.6 (Qoder)" },
+    { id: "mmodel", name: "MiniMax M2.7 (Qoder)" },
   ],
   cu: [  // Cursor IDE
     { id: "default", name: "Auto (Server Picks)" },
@@ -371,13 +391,11 @@ export const PROVIDER_MODELS = {
     { id: "Doubao-Seed-2.0-pro", name: "Doubao-Seed-2.0-pro" },
     { id: "Doubao-Seed-2.0-lite", name: "Doubao-Seed-2.0-lite" },
     { id: "Doubao-Seed-Code", name: "Doubao-Seed-Code" },
+    { id: "DeepSeek-V4-Flash", name: "DeepSeek-V4-Flash" },
+    { id: "DeepSeek-V4-Pro", name: "DeepSeek-V4-Pro" },
     { id: "GLM-5.1", name: "GLM-5.1" },
     { id: "MiniMax-M2.7", name: "MiniMax-M2.7" },
     { id: "Kimi-K2.6", name: "Kimi-K2.6" },
-    { id: "MiniMax-M2.5", name: "MiniMax-M2.5" },
-    { id: "Kimi-K2.5", name: "Kimi-K2.5" },
-    { id: "GLM-4.7", name: "GLM-4.7" },
-    { id: "DeepSeek-V3.2", name: "DeepSeek-V3.2" },
   ],
   "cloudflare-ai": [
     { id: "@cf/meta/llama-3.2-1b-instruct", name: "Llama 3.2 1B Instruct" },
@@ -393,6 +411,17 @@ export const PROVIDER_MODELS = {
     { id: "@cf/zai-org/glm-4.7-flash", name: "GLM 4.7 Flash" },
     { id: "@cf/qwen/qwq-32b", name: "QwQ 32B" },
     { id: "@cf/qwen/qwen2.5-coder-32b-instruct", name: "Qwen 2.5 Coder 32B Instruct" },
+    { id: "@cf/black-forest-labs/flux-2-klein-9b", name: "FLUX.2 Klein 9B", type: "image", params: ["size"] },
+    { id: "@cf/black-forest-labs/flux-2-klein-4b", name: "FLUX.2 Klein 4B", type: "image", params: ["size"] },
+    { id: "@cf/black-forest-labs/flux-2-dev", name: "FLUX.2 Dev", type: "image", params: ["size"] },
+    { id: "@cf/leonardo/lucid-origin", name: "Lucid Origin", type: "image", params: ["size"] },
+    { id: "@cf/leonardo/phoenix-1.0", name: "Phoenix 1.0", type: "image", params: ["size"] },
+    { id: "@cf/black-forest-labs/flux-1-schnell", name: "FLUX.1 Schnell", type: "image", params: ["size"] },
+    { id: "@cf/bytedance/stable-diffusion-xl-lightning", name: "SDXL Lightning", type: "image", params: ["size"] },
+    { id: "@cf/lykon/dreamshaper-8-lcm", name: "DreamShaper 8 LCM", type: "image", params: ["size"] },
+    { id: "@cf/runwayml/stable-diffusion-v1-5-img2img", name: "Stable Diffusion v1.5 Img2Img", type: "image", params: ["size"], capabilities: ["edit"] },
+    { id: "@cf/runwayml/stable-diffusion-v1-5-inpainting", name: "Stable Diffusion v1.5 Inpainting", type: "image", params: ["size"], capabilities: ["edit", "mask"] },
+    { id: "@cf/stabilityai/stable-diffusion-xl-base-1.0", name: "SDXL Base 1.0", type: "image", params: ["size"] },
   ],
   byteplus: [
     { id: "seed-2-0-pro-260328", name: "Seed 2.0 Pro" },
@@ -404,9 +433,25 @@ export const PROVIDER_MODELS = {
     { id: "gpt-oss-120b-250805", name: "GPT-OSS-120B" },
   ],
   deepseek: [
+    { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro" },
+    { id: "deepseek-v4-pro-max", name: "DeepSeek V4 Pro Max", upstreamModelId: "deepseek-v4-pro" },
+    { id: "deepseek-v4-pro-none", name: "DeepSeek V4 Pro No Thinking", upstreamModelId: "deepseek-v4-pro" },
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash" },
     { id: "deepseek-chat", name: "DeepSeek V3.2 Chat" },
     { id: "deepseek-reasoner", name: "DeepSeek V3.2 Reasoner" },
+  ],
+  commandcode: [
+    { id: "deepseek/deepseek-v4-pro", name: "DeepSeek V4 Pro" },
+    { id: "deepseek/deepseek-v4-flash", name: "DeepSeek V4 Flash" },
+    { id: "moonshotai/Kimi-K2.6", name: "Kimi K2.6" },
+    { id: "moonshotai/Kimi-K2.5", name: "Kimi K2.5" },
+    { id: "zai-org/GLM-5.1", name: "GLM 5.1" },
+    { id: "zai-org/GLM-5", name: "GLM 5" },
+    { id: "MiniMaxAI/MiniMax-M2.7", name: "MiniMax M2.7" },
+    { id: "MiniMaxAI/MiniMax-M2.5", name: "MiniMax M2.5" },
+    { id: "Qwen/Qwen3.6-Max-Preview", name: "Qwen 3.6 Max Preview" },
+    { id: "Qwen/Qwen3.6-Plus", name: "Qwen 3.6 Plus" },
+    { id: "stepfun/Step-3.5-Flash", name: "Step 3.5 Flash" },
   ],
   groq: [
     { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
@@ -423,6 +468,7 @@ export const PROVIDER_MODELS = {
     { id: "grok-4-fast-reasoning", name: "Grok 4 Fast Reasoning" },
     { id: "grok-code-fast-1", name: "Grok Code Fast" },
     { id: "grok-3", name: "Grok 3" },
+    { id: "grok-2-image-1212", name: "Grok 2 Image", type: "image", params: ["n", "response_format"] },
   ],
   mistral: [
     { id: "mistral-large-latest", name: "Mistral Large 3" },
@@ -498,6 +544,16 @@ export const PROVIDER_MODELS = {
     { id: "mimo-v2.5", name: "MiMo V2.5" },
     { id: "mimo-v2-omni", name: "MiMo V2 Omni" },
     { id: "mimo-v2-flash", name: "MiMo V2 Flash" },
+  ],
+  "xiaomi-tokenplan": [
+    { id: "mimo-v2.5-pro", name: "MiMo V2.5 Pro" },
+    { id: "mimo-v2.5", name: "MiMo V2.5" },
+    { id: "mimo-v2-pro", name: "MiMo V2 Pro" },
+    { id: "mimo-v2-omni", name: "MiMo V2 Omni" },
+    { id: "mimo-v2-tts", name: "MiMo V2 TTS" },
+    { id: "mimo-v2.5-tts", name: "MiMo V2.5 TTS" },
+    { id: "mimo-v2.5-tts-voiceclone", name: "MiMo V2.5 TTS Voice Clone" },
+    { id: "mimo-v2.5-tts-voicedesign", name: "MiMo V2.5 TTS Voice Design" },
   ],
   hyperbolic: [
     { id: "Qwen/QwQ-32B", name: "QwQ 32B" },
@@ -576,6 +632,152 @@ export const PROVIDER_MODELS = {
     { id: "openai/whisper-large-v3", name: "Whisper Large v3 (HF)", type: "stt", params: ["language"] },
     { id: "openai/whisper-small", name: "Whisper Small (HF)", type: "stt", params: ["language"] },
   ],
+
+  // === Free-tier providers (synced from OmniRoute) ===
+  agentrouter: [
+    { id: "claude-opus-4-6", name: "Claude 4.6 Opus" },
+    { id: "claude-haiku-4-5-20251001", name: "Claude 4.5 Haiku" },
+    { id: "glm-5.1", name: "GLM 5.1" },
+    { id: "deepseek-v3.2", name: "DeepSeek V3.2" },
+  ],
+  aimlapi: [
+    { id: "gpt-4o", name: "GPT-4o" },
+    { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+    { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet" },
+    { id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash" },
+    { id: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", name: "Llama 3.1 70B" },
+  ],
+  novita: [
+    { id: "deepseek/deepseek-r1", name: "DeepSeek R1" },
+    { id: "deepseek/deepseek-v3", name: "DeepSeek V3" },
+    { id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B" },
+    { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B" },
+  ],
+  modal: [
+    { id: "auto", name: "Auto (User-hosted)" },
+  ],
+  reka: [
+    { id: "reka-flash-3", name: "Reka Flash 3" },
+    { id: "reka-edge-2603", name: "Reka Edge 2603" },
+  ],
+  nlpcloud: [
+    { id: "chatdolphin", name: "ChatDolphin" },
+    { id: "dolphin", name: "Dolphin" },
+    { id: "finetuned-llama-3-70b", name: "Llama 3 70B (Finetuned)" },
+  ],
+  bazaarlink: [
+    { id: "auto:free", name: "Auto Free (Zero Cost)" },
+    { id: "auto", name: "Auto (Best Model)" },
+  ],
+  completions: [
+    { id: "claude-opus-4", name: "Claude Opus 4" },
+    { id: "claude-sonnet-4", name: "Claude Sonnet 4" },
+    { id: "gpt-4o", name: "GPT-4o" },
+    { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
+  ],
+  enally: [
+    { id: "gpt-4o", name: "GPT-4o" },
+    { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+    { id: "claude-3-5-sonnet", name: "Claude 3.5 Sonnet" },
+  ],
+  freetheai: [
+    { id: "gpt-4o", name: "GPT-4o" },
+    { id: "claude-3-5-sonnet", name: "Claude 3.5 Sonnet" },
+    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" },
+    { id: "deepseek-chat", name: "DeepSeek Chat" },
+  ],
+  llm7: [
+    { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+    { id: "gpt-4.1-mini", name: "GPT-4.1 Mini" },
+    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
+  ],
+  lepton: [
+    { id: "llama3-1-405b", name: "Llama 3.1 405B" },
+    { id: "llama3-1-70b", name: "Llama 3.1 70B" },
+    { id: "llama3-1-8b", name: "Llama 3.1 8B" },
+    { id: "mixtral-8x7b", name: "Mixtral 8x7B" },
+  ],
+  kluster: [
+    { id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1" },
+    { id: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", name: "Llama 4 Maverick" },
+    { id: "meta-llama/Llama-4-Scout-17B-16E-Instruct", name: "Llama 4 Scout" },
+    { id: "Qwen/Qwen3-235B-A22B-Instruct", name: "Qwen3 235B" },
+  ],
+  ai21: [
+    { id: "jamba-large", name: "Jamba 1.5 Large" },
+    { id: "jamba-mini", name: "Jamba 1.5 Mini" },
+  ],
+  "inference-net": [
+    { id: "meta-llama/llama-3.3-70b-instruct/fp-16", name: "Llama 3.3 70B" },
+    { id: "deepseek/deepseek-v3-0324", name: "DeepSeek V3" },
+    { id: "mistralai/mistral-nemo-12b-instruct/fp-16", name: "Mistral Nemo 12B" },
+  ],
+  predibase: [
+    { id: "llama-3-2-3b-instruct", name: "Llama 3.2 3B" },
+    { id: "llama-3-1-8b-instruct", name: "Llama 3.1 8B" },
+    { id: "qwen2-5-7b-instruct", name: "Qwen 2.5 7B" },
+  ],
+  bytez: [
+    { id: "meta-llama/Llama-3.3-70B-Instruct", name: "Llama 3.3 70B" },
+    { id: "mistralai/Mistral-7B-Instruct-v0.3", name: "Mistral 7B v0.3" },
+    { id: "Qwen/Qwen2.5-72B-Instruct", name: "Qwen 2.5 72B" },
+  ],
+  morph: [
+    { id: "morph-v3-large", name: "Morph V3 Large" },
+    { id: "morph-v3-fast", name: "Morph V3 Fast" },
+  ],
+  longcat: [
+    { id: "LongCat-Flash-Chat", name: "LongCat Flash Chat" },
+    { id: "LongCat-Flash-Thinking", name: "LongCat Flash Thinking" },
+    { id: "LongCat-Flash-Lite", name: "LongCat Flash Lite" },
+  ],
+  puter: [
+    { id: "gpt-5", name: "GPT-5" },
+    { id: "claude-opus-4", name: "Claude Opus 4" },
+    { id: "gemini-3-pro-preview", name: "Gemini 3 Pro" },
+    { id: "grok-4", name: "Grok 4" },
+    { id: "deepseek-chat", name: "DeepSeek V3" },
+  ],
+  uncloseai: [
+    { id: "auto", name: "Auto (Free)" },
+    { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+  ],
+  scaleway: [
+    { id: "qwen3-235b-a22b-instruct-2507", name: "Qwen3 235B" },
+    { id: "llama-3.3-70b-instruct", name: "Llama 3.3 70B" },
+    { id: "mistral-small-3.1-24b-instruct-2503", name: "Mistral Small 3.1" },
+  ],
+  deepinfra: [
+    { id: "meta-llama/Meta-Llama-3.1-70B-Instruct", name: "Llama 3.1 70B" },
+    { id: "deepseek-ai/DeepSeek-V3", name: "DeepSeek V3" },
+    { id: "Qwen/Qwen2.5-72B-Instruct", name: "Qwen 2.5 72B" },
+  ],
+  sambanova: [
+    { id: "Meta-Llama-3.1-405B-Instruct", name: "Llama 3.1 405B" },
+    { id: "Meta-Llama-3.1-70B-Instruct", name: "Llama 3.1 70B" },
+    { id: "Meta-Llama-3.1-8B-Instruct", name: "Llama 3.1 8B" },
+  ],
+  nscale: [
+    { id: "meta-llama/Llama-3.3-70B-Instruct", name: "Llama 3.3 70B" },
+    { id: "Qwen/Qwen2.5-Coder-32B-Instruct", name: "Qwen 2.5 Coder 32B" },
+  ],
+  baseten: [
+    { id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1" },
+    { id: "meta-llama/Llama-3.3-70B-Instruct", name: "Llama 3.3 70B" },
+  ],
+  publicai: [
+    { id: "auto", name: "Auto (Community)" },
+  ],
+  "nous-research": [
+    { id: "Hermes-4-405B", name: "Hermes 4 405B" },
+    { id: "Hermes-4-70B", name: "Hermes 4 70B" },
+  ],
+  glhf: [
+    { id: "hf:meta-llama/Meta-Llama-3.1-405B-Instruct", name: "Llama 3.1 405B" },
+    { id: "hf:meta-llama/Meta-Llama-3.1-70B-Instruct", name: "Llama 3.1 70B" },
+    { id: "hf:Qwen/Qwen2.5-72B-Instruct", name: "Qwen 2.5 72B" },
+  ],
+
   deepgram: [
     { id: "nova-3", name: "Nova 3", type: "stt", params: ["language"] },
     { id: "nova-2", name: "Nova 2", type: "stt", params: ["language"] },
@@ -683,6 +885,7 @@ const OAUTH_ALIASES = {
   kilocode: "kc",
   cline: "cl",
   opencode: "oc",
+  qoder: "qd",
   vertex: "vertex",
   "vertex-partner": "vertex-partner",
 };

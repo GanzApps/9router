@@ -58,13 +58,17 @@ const CLAUDE_CONFIG = {
  * @returns {Object} Usage data with quotas
  */
 export async function getUsageForProvider(connection, proxyOptions = null) {
-  const { provider, accessToken, apiKey, providerSpecificData } = connection;
+  const { provider, accessToken, apiKey, providerSpecificData, projectId } = connection;
+  const providerDataWithProjectId = {
+    ...(providerSpecificData || {}),
+    ...(projectId ? { projectId } : {}),
+  };
 
   switch (provider) {
     case "github":
       return await getGitHubUsage(accessToken, providerSpecificData, proxyOptions);
     case "gemini-cli":
-      return await getGeminiUsage(accessToken, providerSpecificData, proxyOptions);
+      return await getGeminiUsage(accessToken, providerDataWithProjectId, proxyOptions);
     case "antigravity":
       return await getAntigravityUsage(accessToken, providerSpecificData, proxyOptions);
     case "claude":
@@ -73,6 +77,8 @@ export async function getUsageForProvider(connection, proxyOptions = null) {
       return await getCodexUsage(accessToken, proxyOptions);
     case "kiro":
       return await getKiroUsage(accessToken, providerSpecificData, proxyOptions);
+    case "qoder":
+      return await getQoderUsage(accessToken, proxyOptions);
     case "qwen":
       return await getQwenUsage(accessToken, providerSpecificData);
     case "iflow":
@@ -222,18 +228,22 @@ async function getGeminiUsage(accessToken, providerSpecificData, proxyOptions = 
   }
 
   try {
-    // Resolve project id: prefer connection-stored id, else loadCodeAssist lookup
-    let projectId = providerSpecificData?.projectId || null;
+    // Resolve project id: prefer connection-stored id, else loadCodeAssist lookup.
+    // #1271: OAuth save stores projectId on the connection, not providerSpecificData.
+    let projectId = normalizeCloudCodeProjectId(providerSpecificData?.projectId);
     let plan = "Free";
 
     if (!projectId) {
       const subInfo = await getGeminiSubscriptionInfo(accessToken, proxyOptions);
-      projectId = subInfo?.cloudaicompanionProject || null;
+      projectId = normalizeCloudCodeProjectId(subInfo?.cloudaicompanionProject);
       plan = subInfo?.currentTier?.name || plan;
     }
 
     if (!projectId) {
-      return { plan, message: "Gemini CLI project ID not available." };
+      return {
+        plan,
+        message: "Gemini CLI project ID not available. Reconnect Gemini CLI, or configure a Google Cloud project with Gemini Code Assist access before checking quota.",
+      };
     }
 
     const controller = new AbortController();
@@ -289,6 +299,14 @@ async function getGeminiUsage(accessToken, providerSpecificData, proxyOptions = 
   }
 }
 
+function normalizeCloudCodeProjectId(project) {
+  if (typeof project === "string") return project.trim() || null;
+  if (project && typeof project === "object" && typeof project.id === "string") {
+    return project.id.trim() || null;
+  }
+  return null;
+}
+
 /**
  * Get Gemini CLI subscription info via loadCodeAssist
  */
@@ -305,11 +323,7 @@ async function getGeminiSubscriptionInfo(accessToken, proxyOptions = null) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          metadata: {
-            ideType: "IDE_UNSPECIFIED",
-            platform: "PLATFORM_UNSPECIFIED",
-            pluginType: "GEMINI",
-          },
+          metadata: CLIENT_METADATA,
         }),
         signal: controller.signal,
       },
@@ -383,12 +397,14 @@ async function getAntigravityUsage(accessToken, providerSpecificData, proxyOptio
     if (data.models) {
       // Filter only recommended/important models (must match PROVIDER_MODELS ag ids)
       const importantModels = [
-        'claude-opus-4-6-thinking',
-        'claude-sonnet-4-6',
-        'gemini-3.1-pro-high',
+        'gemini-3-flash-agent',
+        'gemini-3.5-flash-low',
+        'gemini-pro-agent',
         'gemini-3.1-pro-low',
-        'gemini-3-flash',
+        'claude-sonnet-4-6',
+        'claude-opus-4-6-thinking',
         'gpt-oss-120b-medium',
+        'gemini-3-flash',
       ];
 
       for (const [modelKey, info] of Object.entries(data.models)) {
@@ -966,14 +982,27 @@ async function getGlmUsage(apiKey, provider, proxyOptions = null) {
 }
 
 // ── MiniMax helpers ──────────────────────────────────────────────────────
-function isMiniMaxTextQuotaModel(modelName) {
-  const normalized = (modelName || "").trim().toLowerCase();
-  return normalized.startsWith("minimax-m") || normalized.startsWith("coding-plan");
-}
-
 function getMiniMaxField(model, snakeKey, camelKey) {
   if (!model || typeof model !== "object") return null;
   return model[snakeKey] ?? model[camelKey] ?? null;
+}
+
+function getMiniMaxModelName(model) {
+  return String(getMiniMaxField(model, "model_name", "modelName") || "").trim();
+}
+
+function formatMiniMaxQuotaName(model) {
+  const rawName = getMiniMaxModelName(model);
+  if (!rawName) return "MiniMax";
+
+  return rawName
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (ch) => ch.toUpperCase())
+    .replace(/\bTo\b/g, "to")
+    .replace(/\bTts\b/g, "TTS")
+    .replace(/\bHd\b/g, "HD");
 }
 
 function getMiniMaxSessionTotal(model) {
@@ -984,11 +1013,8 @@ function getMiniMaxWeeklyTotal(model) {
   return Math.max(0, Number(getMiniMaxField(model, "current_weekly_total_count", "currentWeeklyTotalCount")) || 0);
 }
 
-function pickMiniMaxRepresentativeModel(models, getTotal) {
-  const withQuota = models.filter((m) => getTotal(m) > 0);
-  const pool = withQuota.length > 0 ? withQuota : models;
-  if (pool.length === 0) return null;
-  return pool.reduce((best, current) => (getTotal(current) > getTotal(best) ? current : best));
+function hasMiniMaxQuota(model) {
+  return getMiniMaxSessionTotal(model) > 0 || getMiniMaxWeeklyTotal(model) > 0;
 }
 
 function getMiniMaxResetAt(model, capturedAtMs, remainsSnake, remainsCamel, endSnake, endCamel) {
@@ -1009,6 +1035,19 @@ function buildMiniMaxQuota(total, count, resetAt, countMeansRemaining) {
     resetAt,
     unlimited: false,
   };
+}
+
+function addMiniMaxQuota(quotas, key, model, getTotal, countSnake, countCamel, resetArgs, countMeansRemaining) {
+  const total = getTotal(model);
+  if (total <= 0) return;
+
+  const count = Math.max(0, Number(getMiniMaxField(model, countSnake, countCamel)) || 0);
+  quotas[key] = buildMiniMaxQuota(
+    total,
+    count,
+    getMiniMaxResetAt(model, ...resetArgs),
+    countMeansRemaining
+  );
 }
 
 /**
@@ -1064,34 +1103,37 @@ async function getMiniMaxUsage(apiKey, provider, proxyOptions = null) {
 
       const modelRemains = payload?.model_remains ?? payload?.modelRemains;
       const allModels = Array.isArray(modelRemains) ? modelRemains : [];
-      const textModels = allModels.filter((m) => isMiniMaxTextQuotaModel(String(getMiniMaxField(m, "model_name", "modelName"))));
+      const quotaModels = allModels.filter(hasMiniMaxQuota);
 
-      if (textModels.length === 0) {
-        return { message: "MiniMax connected. No text quota data was returned." };
+      if (quotaModels.length === 0) {
+        return { message: "MiniMax connected. No quota data was returned." };
       }
 
       const capturedAtMs = Date.now();
       const countMeansRemaining = usageUrl.includes("/coding_plan/remains");
       const quotas = {};
 
-      const sessionModel = pickMiniMaxRepresentativeModel(textModels, getMiniMaxSessionTotal);
-      if (sessionModel) {
-        const total = getMiniMaxSessionTotal(sessionModel);
-        const count = Math.max(0, Number(getMiniMaxField(sessionModel, "current_interval_usage_count", "currentIntervalUsageCount")) || 0);
-        quotas["session (5h)"] = buildMiniMaxQuota(
-          total, count,
-          getMiniMaxResetAt(sessionModel, capturedAtMs, "remains_time", "remainsTime", "end_time", "endTime"),
+      for (const model of quotaModels) {
+        const displayName = formatMiniMaxQuotaName(model);
+        addMiniMaxQuota(
+          quotas,
+          `${displayName} (5h)`,
+          model,
+          getMiniMaxSessionTotal,
+          "current_interval_usage_count",
+          "currentIntervalUsageCount",
+          [capturedAtMs, "remains_time", "remainsTime", "end_time", "endTime"],
           countMeansRemaining
         );
-      }
 
-      const weeklyModel = pickMiniMaxRepresentativeModel(textModels, getMiniMaxWeeklyTotal);
-      if (weeklyModel && getMiniMaxWeeklyTotal(weeklyModel) > 0) {
-        const total = getMiniMaxWeeklyTotal(weeklyModel);
-        const count = Math.max(0, Number(getMiniMaxField(weeklyModel, "current_weekly_usage_count", "currentWeeklyUsageCount")) || 0);
-        quotas["weekly (7d)"] = buildMiniMaxQuota(
-          total, count,
-          getMiniMaxResetAt(weeklyModel, capturedAtMs, "weekly_remains_time", "weeklyRemainsTime", "weekly_end_time", "weeklyEndTime"),
+        addMiniMaxQuota(
+          quotas,
+          `${displayName} (7d)`,
+          model,
+          getMiniMaxWeeklyTotal,
+          "current_weekly_usage_count",
+          "currentWeeklyUsageCount",
+          [capturedAtMs, "weekly_remains_time", "weeklyRemainsTime", "weekly_end_time", "weeklyEndTime"],
           countMeansRemaining
         );
       }
@@ -1108,4 +1150,66 @@ async function getMiniMaxUsage(apiKey, provider, proxyOptions = null) {
   }
 
   return { message: lastErrorMessage ? `MiniMax connected. Unable to fetch usage: ${lastErrorMessage}` : "MiniMax connected. Unable to fetch usage." };
+}
+
+async function getQoderUsage(accessToken, proxyOptions = null) {
+  if (!accessToken) {
+    return { message: "Qoder usage unavailable: no access token" };
+  }
+  try {
+    const response = await proxyAwareFetch(
+      "https://openapi.qoder.sh/api/v2/quota/usage",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+        },
+      },
+      proxyOptions,
+    );
+    if (!response.ok) {
+      return { message: `Qoder connected. Usage fetch returned ${response.status}.` };
+    }
+    const body = await response.json().catch(() => null);
+    if (!body) {
+      return { message: "Qoder connected. Usage response was not JSON." };
+    }
+    // Quota records live under `quotas`; scalar metadata
+    // (totalUsagePercentage, isQuotaExceeded, expiresAt) are surfaced as
+    // siblings so the dashboard parser doesn't try to render them as rows.
+    const userQuota = body.userQuota || {};
+    const orgQuota = body.orgResourcePackage || {};
+    // Qoder publishes a single absolute reset timestamp (`expiresAt` in ms);
+    // surface it on every quota record as ISO so the table can render
+    // "resets at" alongside used/total.
+    const expiresAtMs = Number.isFinite(Number(body.expiresAt)) && Number(body.expiresAt) > 0
+      ? Number(body.expiresAt)
+      : null;
+    const resetAt = expiresAtMs ? new Date(expiresAtMs).toISOString() : null;
+    const quotas = {
+      user: {
+        total: Number(userQuota.total) || 0,
+        used: Number(userQuota.used) || 0,
+        remaining: Number(userQuota.remaining) || 0,
+        unit: userQuota.unit || "credits",
+        resetAt,
+      },
+      organization: {
+        total: Number(orgQuota.total) || 0,
+        used: Number(orgQuota.used) || 0,
+        remaining: Number(orgQuota.remaining) || 0,
+        unit: orgQuota.unit || "credits",
+        resetAt,
+      },
+    };
+    return {
+      quotas,
+      totalUsagePercentage: Number(body.totalUsagePercentage) || 0,
+      isQuotaExceeded: !!body.isQuotaExceeded,
+      expiresAt: expiresAtMs,
+    };
+  } catch (error) {
+    return { message: `Qoder connected. Unable to fetch usage: ${error.message}` };
+  }
 }
