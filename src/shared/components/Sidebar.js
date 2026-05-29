@@ -445,7 +445,7 @@ function ManualUpdatePanel({ latestVersion, installCmd, copied, onCopyAndShutdow
             {copied ? "✓ Copied — shutting down..." : isCountingDown ? `Shutting down in ${countdown}s` : "Copy & Shutdown"}
           </Button>
         </div>
-) : (
+      ) : (
         <p className="text-xs text-white/50 text-center">
           This may take 30-60 seconds. Please do not close this window.
         </p>
