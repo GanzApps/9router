@@ -42,6 +42,20 @@ async function tryNodeSqlite() {
   }
 }
 
+async function tryD1() {
+  // Cloudflare Workers runtime — D1 is bound via env
+  // Skip if not in Workers (check for Workers-specific global)
+  if (typeof globalThis !== "undefined" && globalThis.env && globalThis.env.DB) {
+    try {
+      const { createD1Adapter } = await import("./adapters/d1Adapter.js");
+      return await createD1Adapter("DB");
+    } catch (e) {
+      console.warn(`[DB] D1 unavailable: ${e.message}`);
+    }
+  }
+  return null;
+}
+
 async function trySqlJs() {
   try {
     const { createSqlJsAdapter } = await import("./adapters/sqljsAdapter.js");
@@ -60,6 +74,7 @@ async function initAdapter() {
   let adapter = await tryBunSqlite();
   if (!adapter) adapter = await tryBetterSqlite();
   if (!adapter) adapter = await tryNodeSqlite();
+  if (!adapter) adapter = await tryD1();
   if (!adapter) adapter = await trySqlJs();
   if (!adapter) throw new Error("[DB] No SQLite driver available (bun/better/node/sql.js all failed)");
 
