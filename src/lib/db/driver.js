@@ -44,7 +44,6 @@ async function tryNodeSqlite() {
 
 async function tryD1() {
   // Cloudflare Workers runtime — D1 is bound via env
-  // Skip if not in Workers (check for Workers-specific global)
   if (typeof globalThis !== "undefined" && globalThis.env && globalThis.env.DB) {
     try {
       const { createD1Adapter } = await import("./adapters/d1Adapter.js");
